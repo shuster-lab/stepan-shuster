@@ -187,16 +187,30 @@
     line-height: .92;
     letter-spacing: -.01em;
     text-transform: uppercase;
-    overflow: hidden;
+    overflow: visible;
   }
-  .hero-title span {
+  .title-line {
     display: block;
+    overflow: hidden;
     opacity: 0;
-    transform: translateY(110%);
-    animation: slideUp .9s cubic-bezier(.16,1,.3,1) forwards;
+    animation: fadeUp .1s 1.2s forwards;
   }
-  .hero-title span:nth-child(2) { animation-delay: .1s; }
-  .hero-title span:nth-child(3) { animation-delay: .2s; }
+  .title-letter {
+    display: inline-block;
+    cursor: default;
+    transition: transform .4s cubic-bezier(.16,1,.3,1), color .3s;
+    will-change: transform;
+    /* scramble start: invisible until JS fires */
+  }
+  /* glitch flash on load */
+  @keyframes glitchFlash {
+    0%   { opacity: 1; transform: translateX(0) skewX(0deg); }
+    15%  { opacity: .7; transform: translateX(-3px) skewX(-4deg); color: #ff3333; }
+    30%  { opacity: 1; transform: translateX(2px) skewX(3deg); }
+    45%  { opacity: .8; transform: translateX(-1px) skewX(-2deg); color: #33ffee; }
+    60%  { opacity: 1; transform: translateX(0) skewX(0deg); }
+    100% { opacity: 1; transform: translateX(0) skewX(0deg); }
+  }
   .hero-bottom {
     display: flex;
     align-items: flex-end;
@@ -790,9 +804,9 @@
 
   <div class="hero-content">
     <div class="hero-label" data-en="UX/UI &amp; Web Designer — Prague, CZ" data-cs="UX/UI &amp; Web Designer — Praha, CZ">UX/UI &amp; Web Designer — Prague, CZ</div>
-    <div class="hero-title">
-      <span>STEPAN</span>
-      <span>SHUSTER</span>
+    <div class="hero-title" id="heroTitle">
+      <span class="title-line" id="titleLine1"></span>
+      <span class="title-line" id="titleLine2"></span>
     </div>
     <div class="hero-bottom">
       <div class="hero-tagline" data-en="Designing digital experiences that feel inevitable — where structure meets intuition." data-cs="Navrhuji digitální zážitky, které působí přirozeně — kde struktura potkává intuici.">
@@ -1260,11 +1274,128 @@ function slideTesti(d) {
   document.getElementById('testiTrack').style.transform = `translateX(calc(-${ti*100}% - ${ti*2}px))`;
 }
 
-// PARALLAX
+// PARALLAX on scroll
 window.addEventListener('scroll', () => {
   const y = window.scrollY;
   const mw = document.querySelector('.hero-marquee-wrap');
   if(mw) mw.style.transform = `translateY(${y*.28}px)`;
+});
+
+// ─── EFFECT 1: SCRAMBLE / GLITCH title on load ───────────────────────
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
+const WORDS = ['STEPAN', 'SHUSTER'];
+const lineEls = [document.getElementById('titleLine1'), document.getElementById('titleLine2')];
+
+function buildLetters() {
+  WORDS.forEach((word, wi) => {
+    lineEls[wi].innerHTML = '';
+    [...word].forEach(ch => {
+      const s = document.createElement('span');
+      s.className = 'title-letter';
+      s.textContent = ch;
+      s.dataset.final = ch;
+      lineEls[wi].appendChild(s);
+    });
+  });
+}
+
+function scrambleLine(lineEl, delay) {
+  const letters = lineEl.querySelectorAll('.title-letter');
+  lineEl.style.opacity = '1';
+  letters.forEach((el, i) => {
+    const finalChar = el.dataset.final;
+    const startDelay = delay + i * 55;
+    const scrambleDur = 380;
+    const startTime = performance.now() + startDelay;
+
+    el.textContent = CHARS[Math.floor(Math.random()*CHARS.length)];
+    el.style.opacity = '0';
+
+    let frame;
+    function tick(now) {
+      if(now < startTime) { frame = requestAnimationFrame(tick); return; }
+      el.style.opacity = '1';
+      const elapsed = now - startTime;
+      if(elapsed < scrambleDur) {
+        el.textContent = CHARS[Math.floor(Math.random()*CHARS.length)];
+        frame = requestAnimationFrame(tick);
+      } else {
+        el.textContent = finalChar;
+        // glitch flash after settle
+        el.style.animation = `glitchFlash .45s ${i*30}ms ease forwards`;
+      }
+    }
+    frame = requestAnimationFrame(tick);
+  });
+}
+
+// Fire after loader hides
+setTimeout(() => {
+  buildLetters();
+  scrambleLine(lineEls[0], 0);
+  scrambleLine(lineEls[1], 180);
+}, 1200);
+
+// ─── EFFECT 2: MOUSE PARALLAX on marquee images ───────────────────────
+let mouseX = 0, mouseY = 0;
+let paraX = 0, paraY = 0;
+const tracks = document.querySelectorAll('.marquee-track');
+
+document.addEventListener('mousemove', e => {
+  // Normalise to -1..1 from center
+  mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+(function parallaxLoop() {
+  paraX += (mouseX - paraX) * 0.06;
+  paraY += (mouseY - paraY) * 0.06;
+  tracks.forEach((track, i) => {
+    const depth = i === 0 ? 1 : -0.7;
+    const tx = paraX * 28 * depth;
+    const ty = paraY * 16 * depth;
+    // preserve existing marquee animation via CSS, only nudge via translate
+    track.style.setProperty('--px', `${tx}px`);
+    track.style.setProperty('--py', `${ty}px`);
+    track.style.marginLeft  = `${tx}px`;
+    track.style.marginTop   = `${ty}px`;
+  });
+  requestAnimationFrame(parallaxLoop);
+})();
+
+// ─── EFFECT 3: MAGNETIC LETTERS — repel on hover ─────────────────────
+const REPEL_RADIUS = 90;
+const REPEL_STRENGTH = 0.55;
+
+function updateMagnetic(e) {
+  document.querySelectorAll('.title-letter').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if(dist < REPEL_RADIUS) {
+      const force = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+      const tx = -dx * force * 1.4;
+      const ty = -dy * force * 1.1;
+      el.style.transform = `translate(${tx}px, ${ty}px)`;
+      el.style.color = `rgba(240,237,232,${0.5 + force * 0.5})`;
+    } else {
+      el.style.transform = '';
+      el.style.color = '';
+    }
+  });
+}
+
+document.addEventListener('mousemove', updateMagnetic);
+// Reset on mouse leave
+document.addEventListener('mouseleave', () => {
+  document.querySelectorAll('.title-letter').forEach(el => {
+    el.style.transform = '';
+    el.style.color = '';
+  });
 });
 
 // ─── HAMBURGER MENU ──────────────────────────────────────────────────
