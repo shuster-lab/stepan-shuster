@@ -1669,8 +1669,8 @@ window.addEventListener('load', function() {
 
   // ── physics state ─────────────────────────────────────────────────
   var letters  = [];
-  var GX       = 0;
-  var GY       = 0;       // starts frozen — released on scroll into view
+  var GX = 0, GY = 0;       // actual gravity, lerped each frame
+  var targetGX = 0, targetGY = 0;  // set by gyro or launch
   var launched = false;
 
   function spawn() {
@@ -1705,7 +1705,7 @@ window.addEventListener('load', function() {
   function launch() {
     if (launched) return;
     launched = true;
-    GY = 0.55;  // global gravity on
+    targetGY = 0.55;  // engage gravity
 
     letters.forEach(function(l, i) {
       setTimeout(function() {
@@ -1726,27 +1726,73 @@ window.addEventListener('load', function() {
   observer.observe(section);
 
   // ── physics update ────────────────────────────────────────────────
-  var BOUNCE   = 0.32;
-  var FRICTION = 0.88;
-  var AIR_DRAG = 0.992;
+  var BOUNCE   = 0.28;
+  var FRICTION = 0.85;
+  var AIR_DRAG = 0.990;
+
+  function separateLetters() {
+    // AABB collision response between every pair of active letters
+    for (var i = 0; i < letters.length; i++) {
+      for (var j = i + 1; j < letters.length; j++) {
+        var a = letters[i], b = letters[j];
+        if (!a.active || !b.active) continue;
+
+        var dx = b.x - a.x;
+        var dy = b.y - a.y;
+        // min separation needed (use circle approximation for simplicity)
+        var ra = Math.max(a.w, a.h) * 0.42;
+        var rb = Math.max(b.w, b.h) * 0.42;
+        var minDist = ra + rb;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+
+        if (dist < minDist) {
+          // overlap amount
+          var overlap = (minDist - dist) * 0.55;
+          var nx = dx / dist;  // normalised push direction
+          var ny = dy / dist;
+
+          // push apart equally
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          // exchange velocity components along collision normal (elastic)
+          var relVx = b.vx - a.vx;
+          var relVy = b.vy - a.vy;
+          var dot   = relVx * nx + relVy * ny;
+          if (dot < 0) {  // only resolve if approaching
+            var impulse = dot * 0.55;
+            a.vx += impulse * nx;
+            a.vy += impulse * ny;
+            b.vx -= impulse * nx;
+            b.vy -= impulse * ny;
+            // add a tiny spin kick on collision
+            a.va += (Math.random() - .5) * 0.03;
+            b.va += (Math.random() - .5) * 0.03;
+          }
+        }
+      }
+    }
+  }
 
   function update() {
+    // smoothly lerp actual gravity toward target (gyro or default)
+    GX += (targetGX - GX) * 0.07;
+    GY += (targetGY - GY) * 0.07;
+
     var fs = getFS();
     letters.forEach(function(l) {
       l.fs = fs;
-      if (!l.active) return;  // frozen until launched
+      if (!l.active) return;
 
-      // gravity
       l.vx += GX;
       l.vy += GY;
-      // air drag
       l.vx *= AIR_DRAG;
       l.vy *= AIR_DRAG;
-      // angular drag
-      l.va *= 0.985;
-      // move
-      l.x += l.vx;
-      l.y += l.vy;
+      l.va *= 0.984;
+      l.x  += l.vx;
+      l.y  += l.vy;
       l.angle += l.va;
 
       var hw = l.w * 0.5, hh = l.h * 0.5;
@@ -1757,7 +1803,7 @@ window.addEventListener('load', function() {
         l.vy = -Math.abs(l.vy) * BOUNCE;
         l.vx *= FRICTION;
         l.va *= FRICTION;
-        if (Math.abs(l.vy) < 0.8) l.vy = 0;
+        if (Math.abs(l.vy) < 0.6) l.vy = 0;
       }
       // ceiling
       if (l.y - hh < 0) {
@@ -1777,6 +1823,10 @@ window.addEventListener('load', function() {
         l.va *= -0.5;
       }
     });
+
+    // run separation pass (2 iterations = stable without jitter)
+    separateLetters();
+    separateLetters();
   }
 
   // ── draw ─────────────────────────────────────────────────────────
@@ -1814,7 +1864,6 @@ window.addEventListener('load', function() {
   tick();
 
   // ── mouse drag ────────────────────────────────────────────────────
-  var dragging = null, dragOX = 0, dragOY = 0;
 
   function getPos(e) {
     var r  = canvas.getBoundingClientRect();
@@ -1865,10 +1914,13 @@ window.addEventListener('load', function() {
 
   // ── gyroscope ────────────────────────────────────────────────────
   var gyroOn = false;
+
   function onOrientation(e) {
     if (!isMobile() || !launched) return;
-    GX = Math.max(-35, Math.min(35, e.gamma || 0)) / 35 * 0.6;
-    GY = Math.max(0.08, Math.max(-20, Math.min(50, e.beta || 0)) / 35 * 0.7);
+    // gamma = left/right tilt, beta = forward/back tilt
+    // tight clamp + weak multiplier so letters never get crushed
+    targetGX = Math.max(-25, Math.min(25, e.gamma || 0)) / 25 * 0.30;
+    targetGY = Math.max(10,  Math.min(65, e.beta  || 45)) / 45 * 0.42;
   }
   function startGyro() {
     if (gyroOn) return; gyroOn = true;
@@ -1897,8 +1949,9 @@ window.addEventListener('load', function() {
     resizeTimer = setTimeout(function() {
       setSize();
       launched = false;
+      targetGX = 0; targetGY = 0;
+      GX = 0; GY = 0;
       spawn();
-      if (!isMobile()) { GX = 0; GY = 0; }
       // re-observe so it triggers again after resize
       observer.observe(section);
     }, 150);
