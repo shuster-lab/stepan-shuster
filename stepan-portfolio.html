@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stepan Shuster — UX/UI & Web Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --fg: #f0ede8;
+    --fg-dim: rgba(240,237,232,0.45);
+    --border: rgba(240,237,232,0.12);
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--fg);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(240,237,232,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width .25s, height .25s;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,10,0.88);
+    backdrop-filter: blur(14px);
+  }
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-decoration: none;
+    color: var(--fg);
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .nav-links a {
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    letter-spacing: .08em;
+    opacity: .6;
+    transition: opacity .2s;
+  }
+  .nav-links a:hover { opacity: 1; }
+
+  /* LANG SWITCHER */
+  .lang-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .lang-btn {
+    background: none;
+    border: none;
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    padding: 6px 12px;
+    cursor: pointer;
+    opacity: .4;
+    transition: opacity .2s, background .2s;
+    position: relative;
+  }
+  .lang-btn.active {
+    opacity: 1;
+    background: rgba(240,237,232,0.1);
+  }
+  .lang-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+  }
+
+  .nav-right {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 0 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-marquee-wrap {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    overflow: hidden;
+    opacity: .2;
+  }
+  .marquee-track {
+    display: flex;
+    gap: 16px;
+    white-space: nowrap;
+    will-change: transform;
+  }
+  .marquee-track.fwd { animation: mLeft 30s linear infinite; }
+  .marquee-track.rev { animation: mRight 38s linear infinite; }
+  @keyframes mLeft  { from{transform:translateX(0)}       to{transform:translateX(-50%)} }
+  @keyframes mRight { from{transform:translateX(-50%)}    to{transform:translateX(0)} }
+  .marquee-img {
+    width: 200px; height: 260px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+    filter: grayscale(25%);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 40px;
+  }
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    color: var(--fg-dim);
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp .6s .6s forwards;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(60px, 10vw, 148px);
+    line-height: .92;
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    overflow: hidden;
+  }
+  .hero-title span {
+    display: block;
+    opacity: 0;
+    transform: translateY(110%);
+    animation: slideUp .9s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .hero-title span:nth-child(2) { animation-delay: .1s; }
+  .hero-title span:nth-child(3) { animation-delay: .2s; }
+  .hero-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 40px;
+    opacity: 0;
+    animation: fadeUp .6s 1.1s forwards;
+  }
+  .hero-tagline {
+    font-size: 13px;
+    color: var(--fg-dim);
+    font-weight: 300;
+    font-style: italic;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+  .scroll-cta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    letter-spacing: .08em;
+    transition: background .2s, color .2s;
+    white-space: nowrap;
+  }
+  .scroll-cta:hover { background: var(--fg); color: var(--bg); }
+
+  @keyframes fadeUp  { to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* TICKER */
+  .ticker {
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 13px 0;
+  }
+  .ticker-inner {
+    display: flex;
+    white-space: nowrap;
+    animation: mLeft 22s linear infinite;
+  }
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 32px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+  }
+  .ticker-dot { width: 3px; height: 3px; background: var(--fg-dim); border-radius: 50%; }
+
+  /* SECTIONS */
+  section { padding: 120px 40px; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 68px);
+    letter-spacing: -.01em;
+    line-height: 1;
+  }
+  .btn-outline {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--fg);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    transition: background .2s, color .2s;
+    white-space: nowrap;
+  }
+  .btn-outline:hover { background: var(--fg); color: var(--bg); }
+
+  /* WORKS */
+  .works-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2px;
+  }
+  .work-item {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 4/5;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .7s, transform .7s;
+  }
+  .work-item.visible { opacity: 1; transform: translateY(0); }
+  .work-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .65s cubic-bezier(.25,.46,.45,.94), filter .4s;
+    filter: grayscale(35%);
+  }
+  .work-item:hover img { transform: scale(1.04); filter: grayscale(0%); }
+  .work-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.88) 0%, transparent 55%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity .4s;
+  }
+  .work-item:hover .work-overlay { opacity: 1; }
+  .work-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    margin-bottom: 5px;
+  }
+  .work-name {
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: .03em;
+  }
+  .work-type {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    color: var(--fg-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* SERVICES */
+  .services-list { border-top: 1px solid var(--border); }
+  .service-item { border-bottom: 1px solid var(--border); }
+  .service-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 28px 0;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .service-header:hover { opacity: .65; }
+  .service-num { font-family: var(--font-mono); font-size: 10px; color: var(--fg-dim); width: 32px; flex-shrink: 0; }
+  .service-name {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 38px);
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .service-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; color: var(--fg-dim); text-transform: uppercase; }
+  .service-arrow { font-size: 18px; transition: transform .4s cubic-bezier(.16,1,.3,1); }
+  .service-item.open .service-arrow { transform: rotate(45deg); }
+  .service-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .5s cubic-bezier(.16,1,.3,1);
+  }
+  .service-item.open .service-body { grid-template-rows: 1fr; }
+  .service-inner { overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding-bottom: 40px; }
+  .service-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .service-imgs img { width: 100%; aspect-ratio: 4/5; object-fit: cover; filter: grayscale(20%); }
+  .service-imgs img:nth-child(3) { grid-column: 1/-1; aspect-ratio: 16/7; }
+  .service-desc { padding-top: 10px; color: var(--fg-dim); font-size: 14px; line-height: 1.75; font-weight: 300; }
+  .service-desc h4 { font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em; color: var(--fg); margin-bottom: 16px; }
+
+  /* ABOUT */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .about-text p { font-size: 15px; line-height: 1.8; color: var(--fg-dim); font-weight: 300; max-width: 500px; }
+  .about-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 48px; }
+  .meta-cell { border: 1px solid var(--border); padding: 22px; }
+  .meta-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .16em; color: var(--fg-dim); margin-bottom: 8px; text-transform: uppercase; }
+  .meta-val { font-family: var(--font-display); font-size: 24px; letter-spacing: .04em; }
+  .stats-grid { display: flex; flex-direction: column; }
+  .stat-row {
+    display: flex; align-items: center; gap: 24px;
+    padding: 28px 0; border-bottom: 1px solid var(--border);
+    opacity: 0; transform: translateX(20px);
+    transition: opacity .6s, transform .6s;
+  }
+  .stat-row.visible { opacity: 1; transform: translateX(0); }
+  .stat-num { font-family: var(--font-display); font-size: clamp(44px, 5.5vw, 76px); line-height: 1; min-width: 130px; }
+  .stat-desc { color: var(--fg-dim); font-size: 13px; font-weight: 300; }
+  .stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: var(--fg-dim); margin-bottom: 4px; }
+
+  /* SHOWCASE */
+  .showcase { padding: 0 40px 120px; }
+  .showcase-title {
+    font-family: var(--font-display);
+    font-size: clamp(72px, 13vw, 190px);
+    line-height: 1;
+    letter-spacing: -.02em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .showcase-title span {
+    display: block;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
+  }
+  .showcase-title.visible span { opacity: 1; transform: translateY(0); }
+  .showcase-title span:nth-child(2) { transition-delay: .1s; }
+  .showcase-video { width: 100%; aspect-ratio: 16/7; object-fit: cover; margin-top: 4px; display: block; }
+
+  /* FAQ */
+  .faq-list { border-top: 1px solid var(--border); }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-q { display: flex; align-items: center; gap: 24px; padding: 22px 0; cursor: pointer; transition: opacity .2s; }
+  .faq-q:hover { opacity: .65; }
+  .faq-num { font-family: var(--font-mono); font-size: 10px; color: var(--fg-dim); width: 32px; }
+  .faq-text { flex: 1; font-size: 14px; }
+  .faq-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: var(--fg-dim); text-transform: uppercase; margin-right: 16px; }
+  .faq-icon { font-size: 16px; transition: transform .4s cubic-bezier(.16,1,.3,1); }
+  .faq-item.open .faq-icon { transform: rotate(45deg); }
+  .faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.16,1,.3,1); }
+  .faq-item.open .faq-answer { grid-template-rows: 1fr; }
+  .faq-answer-inner { overflow: hidden; transition: padding-bottom .45s; }
+  .faq-item.open .faq-answer-inner { padding-bottom: 24px; }
+  .faq-answer-inner p { color: var(--fg-dim); font-size: 13px; line-height: 1.8; font-weight: 300; padding-left: 56px; max-width: 580px; }
+
+  /* TESTIMONIALS */
+  .testi-track { display: flex; gap: 2px; transition: transform .6s cubic-bezier(.16,1,.3,1); }
+  .testi-card {
+    min-width: 580px; flex-shrink: 0;
+    border: 1px solid var(--border);
+    padding: 44px;
+    display: grid;
+    grid-template-columns: 1fr 90px;
+    gap: 36px;
+    align-items: start;
+  }
+  .testi-quote { font-size: 16px; line-height: 1.7; font-weight: 300; margin-bottom: 28px; }
+  .testi-quote::before { content: '"'; font-family: var(--font-display); font-size: 44px; line-height: .7; display: block; color: var(--fg-dim); margin-bottom: 14px; }
+  .testi-name { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; margin-bottom: 4px; }
+  .testi-role { font-size: 12px; color: var(--fg-dim); }
+  .testi-img { width: 90px; height: 120px; object-fit: cover; filter: grayscale(30%); }
+  .testi-nav { display: flex; gap: 8px; margin-top: 28px; }
+  .testi-btn { width: 38px; height: 38px; border: 1px solid var(--border); background: none; color: var(--fg); cursor: pointer; font-size: 15px; transition: background .2s, color .2s; }
+  .testi-btn:hover { background: var(--fg); color: var(--bg); }
+
+  /* CONTACT */
+  .contact-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .contact-left h2 { font-family: var(--font-display); font-size: clamp(44px, 7vw, 96px); line-height: 1; letter-spacing: -.01em; text-transform: uppercase; margin-bottom: 24px; }
+  .contact-left p { color: var(--fg-dim); font-size: 14px; line-height: 1.75; font-weight: 300; max-width: 360px; }
+  .contact-email { margin-top: 40px; }
+  .contact-email-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; color: var(--fg-dim); margin-bottom: 8px; }
+  .contact-email a { color: var(--fg); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 2px; transition: border-color .2s; }
+  .contact-email a:hover { border-color: var(--fg); }
+  .contact-form { display: flex; flex-direction: column; gap: 2px; }
+  .form-field {
+    border: 1px solid var(--border); background: transparent;
+    color: var(--fg); font-family: var(--font-body); font-size: 14px;
+    padding: 16px 20px; outline: none; transition: border-color .2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .form-field::placeholder { color: rgba(240,237,232,.28); }
+  .form-field:focus { border-color: rgba(240,237,232,.35); }
+  select.form-field { cursor: pointer; }
+  textarea.form-field { resize: vertical; min-height: 110px; }
+  .form-submit {
+    background: var(--fg); color: var(--bg); border: none;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase;
+    padding: 16px 32px; cursor: pointer;
+    transition: opacity .2s; align-self: flex-start; margin-top: 8px;
+  }
+  .form-submit:hover { opacity: .8; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 44px 40px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 40px;
+  }
+  .footer-name { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; }
+  .footer-copy { font-family: var(--font-mono); font-size: 10px; color: var(--fg-dim); text-align: center; }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { color: var(--fg-dim); text-decoration: none; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; transition: color .2s; }
+  .footer-links a:hover { color: var(--fg); }
+
+  /* REVEAL */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* LOADER */
+  .loader {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    transition: opacity .6s .2s, visibility .6s .2s;
+  }
+  .loader.done { opacity: 0; visibility: hidden; }
+  .loader-text { font-family: var(--font-display); font-size: clamp(44px, 8vw, 90px); letter-spacing: -.02em; overflow: hidden; }
+  .loader-text span { display: block; animation: slideUp .9s cubic-bezier(.16,1,.3,1) .1s both; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(240,237,232,.18); }
+
+  /* GRID PHOTOS */
+  .grid-photos { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr; gap: 2px; padding: 0 40px 120px; }
+  .grid-photos img { width: 100%; object-fit: cover; filter: grayscale(20%); }
+  .grid-photos img:nth-child(1) { aspect-ratio: 9/12; }
+  .grid-photos img:nth-child(2) { aspect-ratio: 4/3; align-self: center; }
+  .grid-photos img:nth-child(3) { aspect-ratio: 2/3; }
+  .grid-photos img:nth-child(4) { aspect-ratio: 2/3; }
+
+  /* ─── HAMBURGER (mobile nav) ─────────────────────────── */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 22px; height: 1px;
+    background: var(--fg);
+    transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .2s;
+  }
+  .nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 99;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .35s;
+  }
+  .mobile-menu.open {
+    pointer-events: all;
+    opacity: 1;
+  }
+  .mobile-menu a {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 10vw, 64px);
+    letter-spacing: .02em;
+    color: var(--fg);
+    text-decoration: none;
+    opacity: .5;
+    transition: opacity .2s;
+    line-height: 1.1;
+  }
+  .mobile-menu a:hover { opacity: 1; }
+  .mobile-menu-footer {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+  }
+  .mobile-menu-footer a {
+    font-family: var(--font-mono);
+    font-size: 11px !important;
+    letter-spacing: .1em !important;
+    opacity: .5 !important;
+  }
+
+  /* ─── TABLET — 1024px ───────────────────────────────── */
+  @media (max-width: 1024px) {
+    nav { padding: 18px 28px; }
+    section { padding: 90px 28px; }
+    .showcase { padding: 0 28px 90px; }
+    .grid-photos { padding: 0 28px 90px; }
+
+    .hero-content { padding: 0 28px; }
+    .works-grid { grid-template-columns: repeat(2, 1fr); }
+    .about-grid { grid-template-columns: 1fr; gap: 56px; }
+    .about-text p { max-width: 100%; }
+    .contact-inner { grid-template-columns: 1fr; gap: 48px; }
+    .testi-card { min-width: 480px; }
+
+    .service-inner { grid-template-columns: 1fr; }
+    .service-imgs { display: none; }
+
+    footer { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 20px; }
+    .footer-copy { grid-column: 1/-1; order: 3; text-align: left; }
+  }
+
+  /* ─── MOBILE — 768px ────────────────────────────────── */
+  @media (max-width: 768px) {
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .nav-right { display: none; }
+    .nav-hamburger { display: flex; }
+    .mobile-menu { display: flex; }
+
+    section { padding: 72px 20px; }
+    .showcase { padding: 0 20px 72px; }
+    .grid-photos { padding: 0 20px 72px; grid-template-columns: 1fr 1fr; }
+    .grid-photos img:nth-child(2) { aspect-ratio: 4/5; }
+
+    /* Hero */
+    .hero-content { padding: 0 20px; }
+    .hero-label { font-size: 10px; }
+    .hero-bottom { flex-direction: column; align-items: flex-start; gap: 20px; }
+    .hero-tagline { max-width: 100%; }
+    .marquee-img { width: 130px; height: 170px; }
+
+    /* Section headers */
+    .section-header { flex-wrap: wrap; gap: 16px; }
+
+    /* Works */
+    .works-grid { grid-template-columns: 1fr; }
+    .work-item { aspect-ratio: 3/4; }
+    .work-overlay { opacity: 1; }
+
+    /* Services */
+    .service-header { gap: 14px; }
+    .service-tag { display: none; }
+    .service-inner { grid-template-columns: 1fr; gap: 24px; }
+    .service-imgs { display: none; }
+    .service-desc { padding-top: 0; }
+
+    /* About */
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    .about-meta { grid-template-columns: 1fr 1fr; }
+    .stats-grid { gap: 0; }
+    .stat-num { min-width: 100px; }
+
+    /* Showcase */
+    .showcase-title { font-size: clamp(56px, 16vw, 100px); }
+    .showcase-video { aspect-ratio: 4/3; }
+
+    /* FAQ */
+    .faq-tag { display: none; }
+    .faq-answer-inner p { padding-left: 36px; }
+
+    /* Testimonials */
+    .testi-card { min-width: calc(100vw - 40px); padding: 28px; grid-template-columns: 1fr; }
+    .testi-img { display: none; }
+
+    /* Contact */
+    .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+    .contact-left h2 { font-size: clamp(44px, 12vw, 72px); }
+    .form-submit { width: 100%; text-align: center; padding: 18px; }
+
+    /* Footer */
+    footer { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 20px; padding: 32px 20px; }
+    .footer-copy { text-align: left; }
+    .footer-links { flex-wrap: wrap; gap: 16px; }
+
+    /* Lang switcher stays visible */
+    .lang-switcher { margin-left: auto; }
+  }
+
+  /* ─── SMALL MOBILE — 480px ──────────────────────────── */
+  @media (max-width: 480px) {
+    nav { padding: 14px 16px; }
+    section { padding: 56px 16px; }
+    .showcase { padding: 0 16px 56px; }
+    .grid-photos { padding: 0 16px 56px; grid-template-columns: 1fr; }
+    .grid-photos img { aspect-ratio: 16/9 !important; }
+    .hero-content { padding: 0 16px; }
+
+    .about-meta { grid-template-columns: 1fr; }
+    .stat-num { font-size: 52px; min-width: 90px; }
+    .mobile-menu { padding: 24px 16px; }
+
+    footer { padding: 28px 16px; }
+    .footer-links { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-text"><span>STEPAN</span></div>
+</div>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">S.SHUSTER</a>
+  <div class="nav-links">
+    <a href="#" data-en="Home" data-cs="Domů">Home</a>
+    <a href="#works" data-en="Works [10]" data-cs="Projekty [10]">Works [10]</a>
+    <a href="#about" data-en="About" data-cs="O mně">About</a>
+    <a href="#contact" data-en="Contact" data-cs="Kontakt">Contact</a>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+      <div class="lang-sep"></div>
+      <button class="lang-btn" id="btnCS" onclick="setLang('cs')">CZ</button>
+    </div>
+    <div class="nav-right">
+      <div id="clock"></div>
+      <div>Prague, CZ</div>
+    </div>
+    <div class="nav-hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#" onclick="closeMenu()" data-en="Home" data-cs="Domů">Home</a>
+  <a href="#works" onclick="closeMenu()" data-en="Works" data-cs="Projekty">Works</a>
+  <a href="#about" onclick="closeMenu()" data-en="About" data-cs="O mně">About</a>
+  <a href="#contact" onclick="closeMenu()" data-en="Contact" data-cs="Kontakt">Contact</a>
+  <div class="mobile-menu-footer">
+    <a href="https://www.behance.net/shusters" target="_blank">Behance</a>
+    <a href="https://www.linkedin.com/in/shusterdesign/" target="_blank">LinkedIn</a>
+    <a href="https://www.instagram.com/stepamonstaxd/" target="_blank">Instagram</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-marquee-wrap">
+    <div class="marquee-track fwd">
+      <img class="marquee-img" src="https://framerusercontent.com/images/eV7DmsCpCxcVjBfbIsfwuyEHp30.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/zMaNUF45eJ6XLGOpxRNcVZ7K8EY.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/hPXWoQw7Ll99OWvLutJqrXCmIY.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/2Dorb8TLeDd690Mwf3ljYoRhs68.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/Sm37aLqSctRvWxJUwk28TopnCc0.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/ng7XAKyPSWJcOwaKzkGFa3qStuc.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/Oa1rOrCzFWUWYiD2leceHmn1OGQ.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/7dbSF6iq5XXUu8Ro0ynaQ1H5oo.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/eV7DmsCpCxcVjBfbIsfwuyEHp30.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/zMaNUF45eJ6XLGOpxRNcVZ7K8EY.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/hPXWoQw7Ll99OWvLutJqrXCmIY.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/2Dorb8TLeDd690Mwf3ljYoRhs68.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/Sm37aLqSctRvWxJUwk28TopnCc0.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/ng7XAKyPSWJcOwaKzkGFa3qStuc.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/Oa1rOrCzFWUWYiD2leceHmn1OGQ.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/7dbSF6iq5XXUu8Ro0ynaQ1H5oo.png" alt="">
+    </div>
+    <div class="marquee-track rev">
+      <img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt="">
+      <img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt="">
+    </div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-label" data-en="UX/UI &amp; Web Designer — Prague, CZ" data-cs="UX/UI &amp; Web Designer — Praha, CZ">UX/UI &amp; Web Designer — Prague, CZ</div>
+    <div class="hero-title">
+      <span>STEPAN</span>
+      <span>SHUSTER</span>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-tagline" data-en="Designing digital experiences that feel inevitable — where structure meets intuition." data-cs="Navrhuji digitální zážitky, které působí přirozeně — kde struktura potkává intuici.">
+        Designing digital experiences that feel inevitable — where structure meets intuition.
+      </div>
+      <a href="#works" class="scroll-cta" data-en="[ scroll down ]" data-cs="[ rolovat dolů ]">[ scroll down ]</a>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="tickerInner">
+    <span class="ticker-item" data-en="UX/UI Design" data-cs="UX/UI Design">UX/UI Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Web Design" data-cs="Web Design">Web Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Interaction Design" data-cs="Interaction Design">Interaction Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Wireframing &amp; Prototyping" data-cs="Wireframing &amp; Prototypování">Wireframing &amp; Prototyping <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="User Research" data-cs="Uživatelský výzkum">User Research <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Design Systems" data-cs="Design systémy">Design Systems <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="UX/UI Design" data-cs="UX/UI Design">UX/UI Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Web Design" data-cs="Web Design">Web Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Interaction Design" data-cs="Interaction Design">Interaction Design <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Wireframing &amp; Prototyping" data-cs="Wireframing &amp; Prototypování">Wireframing &amp; Prototyping <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="User Research" data-cs="Uživatelský výzkum">User Research <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Design Systems" data-cs="Design systémy">Design Systems <span class="ticker-dot"></span></span>
+  </div>
+</div>
+
+<!-- WORKS -->
+<section id="works">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-eyebrow" data-en="selected work" data-cs="vybrané projekty">selected work</div>
+      <div class="section-title" data-en="WORKS [10]" data-cs="PROJEKTY [10]">WORKS [10]</div>
+    </div>
+    <a href="#" class="btn-outline" data-en="[ view all ]" data-cs="[ zobrazit vše ]">[ view all ]</a>
+  </div>
+  <div class="works-grid">
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/eV7DmsCpCxcVjBfbIsfwuyEHp30.png" alt="Smart Ek">
+      <div class="work-overlay">
+        <div class="work-num">001</div>
+        <div class="work-name">Smart Ek</div>
+        <div class="work-type" data-en="Platform Design · UX/UI" data-cs="Platform Design · UX/UI">Platform Design · UX/UI</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/zMaNUF45eJ6XLGOpxRNcVZ7K8EY.png" alt="Yard">
+      <div class="work-overlay">
+        <div class="work-num">002</div>
+        <div class="work-name">Yard</div>
+        <div class="work-type" data-en="Real Estate · Web Design" data-cs="Nemovitosti · Web Design">Real Estate · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/QD2AxA7bZdiagkNhpHtgD6IuDIo.png" alt="Borské Zátiší">
+      <div class="work-overlay">
+        <div class="work-num">003</div>
+        <div class="work-name">Borské Zátiší</div>
+        <div class="work-type" data-en="Real Estate · Web Design" data-cs="Nemovitosti · Web Design">Real Estate · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/hPXWoQw7Ll99OWvLutJqrXCmIY.png" alt="Bewelloff">
+      <div class="work-overlay">
+        <div class="work-num">004</div>
+        <div class="work-name">Bewelloff</div>
+        <div class="work-type" data-en="Developer Site · Web Design" data-cs="Developer Site · Web Design">Developer Site · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt="NextGear Academy">
+      <div class="work-overlay">
+        <div class="work-num">005</div>
+        <div class="work-name">NextGear Academy</div>
+        <div class="work-type" data-en="Driving School · Web Design" data-cs="Autoškola · Web Design">Driving School · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt="Tyjamy">
+      <div class="work-overlay">
+        <div class="work-num">006</div>
+        <div class="work-name">Tyjamy</div>
+        <div class="work-type" data-en="Dating App · UX/UI" data-cs="Dating App · UX/UI">Dating App · UX/UI</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt="DiamondFish">
+      <div class="work-overlay">
+        <div class="work-num">007</div>
+        <div class="work-name">DiamondFish</div>
+        <div class="work-type" data-en="B2B · Web Design" data-cs="B2B · Web Design">B2B · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/2Dorb8TLeDd690Mwf3ljYoRhs68.png" alt="Fasády s Filipem">
+      <div class="work-overlay">
+        <div class="work-num">008</div>
+        <div class="work-name">Fasády s Filipem</div>
+        <div class="work-type" data-en="Service Site · Web Design" data-cs="Service Site · Web Design">Service Site · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt="ShapeZone">
+      <div class="work-overlay">
+        <div class="work-num">009</div>
+        <div class="work-name">ShapeZone</div>
+        <div class="work-type" data-en="Gym · Web Design" data-cs="Fitness · Web Design">Gym · Web Design</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <img src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt="Signatura">
+      <div class="work-overlay">
+        <div class="work-num">010</div>
+        <div class="work-name">Signatura</div>
+        <div class="work-type" data-en="Brand Naming · Identity" data-cs="Naming · Identita">Brand Naming · Identity</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section style="padding-top:0;">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-eyebrow" data-en="what I do" data-cs="co dělám">what I do</div>
+      <div class="section-title" data-en="SERVICE(S)" data-cs="SLUŽBY">SERVICE(S)</div>
+    </div>
+  </div>
+  <div class="services-list">
+
+    <div class="service-item open">
+      <div class="service-header" onclick="toggleService(this)">
+        <span class="service-num">[01]</span>
+        <span class="service-name" data-en="UX/UI Design" data-cs="UX/UI Design">UX/UI Design</span>
+        <span class="service-tag" data-en="EXPERIENCE DESIGN" data-cs="DESIGN ZÁŽITKŮ">EXPERIENCE DESIGN</span>
+        <span class="service-arrow">+</span>
+      </div>
+      <div class="service-body">
+        <div class="service-inner">
+          <div class="service-imgs">
+            <img src="https://framerusercontent.com/images/Nda9lE6a3cUZNY91AbeaoYoYNyQ.png" alt="">
+            <img src="https://framerusercontent.com/images/zMaNUF45eJ6XLGOpxRNcVZ7K8EY.png" alt="">
+            <img src="https://framerusercontent.com/images/Iy1QvcioDnEx2yZn4QTGzlDH1gI.png" alt="">
+          </div>
+          <div class="service-desc">
+            <h4 data-en="PROCESS / DELIVERABLES" data-cs="PROCES / VÝSTUPY">PROCESS / DELIVERABLES</h4>
+            <p data-en="User research, persona mapping, wireframes, interactive prototypes — all the way to a polished, tested interface. I design products that are easy to use and clear in purpose, working in Figma with a focus on structure before aesthetics." data-cs="Uživatelský výzkum, persony, wireframy, interaktivní prototypy — až po finální, otestované rozhraní. Navrhuji produkty, které jsou intuitivní a srozumitelné, pracuji ve Figmě se zaměřením na strukturu před estetikou.">
+              User research, persona mapping, wireframes, interactive prototypes — all the way to a polished, tested interface. I design products that are easy to use and clear in purpose, working in Figma with a focus on structure before aesthetics.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-item">
+      <div class="service-header" onclick="toggleService(this)">
+        <span class="service-num">[02]</span>
+        <span class="service-name" data-en="Web Design" data-cs="Web Design">Web Design</span>
+        <span class="service-tag" data-en="DIGITAL PRESENCE" data-cs="DIGITÁLNÍ PŘÍTOMNOST">DIGITAL PRESENCE</span>
+        <span class="service-arrow">+</span>
+      </div>
+      <div class="service-body">
+        <div class="service-inner">
+          <div class="service-imgs">
+            <img src="https://framerusercontent.com/images/GxcDtdUtRhgBB9yuY24MRje9ugA.png" alt="">
+            <img src="https://framerusercontent.com/images/2Dorb8TLeDd690Mwf3ljYoRhs68.png" alt="">
+            <img src="https://framerusercontent.com/images/R74lxtnSJwxLbh6NyJlEkeDBTw.png" alt="">
+          </div>
+          <div class="service-desc">
+            <h4 data-en="PROCESS / DELIVERABLES" data-cs="PROCES / VÝSTUPY">PROCESS / DELIVERABLES</h4>
+            <p data-en="From landing pages to complex multi-section sites — designed with clear hierarchy, intentional typography, and motion that serves the content. I build in Framer and hand off clean design files ready for any developer." data-cs="Od landing pages až po složité vícestránkové weby — navržené s jasnou hierarchií, záměrnou typografií a animacemi, které obsahu slouží. Stavím ve Frameru a předávám čisté soubory připravené pro každého vývojáře.">
+              From landing pages to complex multi-section sites — designed with clear hierarchy, intentional typography, and motion that serves the content. I build in Framer and hand off clean design files ready for any developer.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-eyebrow" data-en="a bit about me" data-cs="něco o mně">a bit about me</div>
+      <div class="section-title" data-en="ABOUT" data-cs="O MNĚ">ABOUT</div>
+    </div>
+    <a href="#contact" class="btn-outline" data-en="[ get in touch ]" data-cs="[ napsat mi ]">[ get in touch ]</a>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p data-en="I'm Stepan — a UX/UI and web designer based in Prague. I've spent the last few years designing digital products across real estate, healthcare, fitness, hospitality and more, working across the full design cycle from research to final handoff. I care about clarity, structure, and the kind of interface that just makes sense." data-cs="Jsem Stepan — UX/UI a web designer se sídlem v Praze. Posledních pár let navrhuji digitální produkty v oblastech nemovitostí, zdravotnictví, fitness, gastronomie a dalších, a to v celém designovém cyklu od výzkumu až po finální předání. Záleží mi na srozumitelnosti, struktuře a rozhraní, které prostě funguje.">
+        I'm Stepan — a UX/UI and web designer based in Prague. I've spent the last few years designing digital products across real estate, healthcare, fitness, hospitality and more, working across the full design cycle from research to final handoff. I care about clarity, structure, and the kind of interface that just makes sense.
+      </p>
+      <div class="about-meta">
+        <div class="meta-cell">
+          <div class="meta-label" data-en="Based in" data-cs="Sídlo">Based in</div>
+          <div class="meta-val">Prague</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-label" data-en="Focus" data-cs="Zaměření">Focus</div>
+          <div class="meta-val">UX · Web</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-label" data-en="Tools" data-cs="Nástroje">Tools</div>
+          <div class="meta-val">Figma · Framer</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-label" data-en="Languages" data-cs="Jazyky">Languages</div>
+          <div class="meta-val">EN · CZ · RU</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-row">
+        <div class="stat-num" data-count="30">0</div>
+        <div class="stat-desc">
+          <div class="stat-label">[01]</div>
+          <span data-en="Client projects delivered" data-cs="Dokončených klientských projektů">Client projects delivered</span>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-num" data-count="4">0</div>
+        <div class="stat-desc">
+          <div class="stat-label">[02]</div>
+          <span data-en="Years of experience" data-cs="Roky zkušeností">Years of experience</span>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-num" data-count="8">0</div>
+        <div class="stat-desc">
+          <div class="stat-label">[03]</div>
+          <span data-en="Industries covered" data-cs="Pokrytých odvětví">Industries covered</span>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-num" data-count="100">0</div>
+        <div class="stat-desc">
+          <div class="stat-label">[04]</div>
+          <span data-en="Full design cycle, start to finish (%)" data-cs="Celý design cyklus, od začátku do konce (%)">Full design cycle, start to finish (%)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<div class="showcase">
+  <div class="showcase-title" id="showTitle">
+    <span data-en="Show" data-cs="Ukáz">Show</span>
+    <span data-en="Case" data-cs="ka">Case</span>
+  </div>
+  <video class="showcase-video" autoplay muted loop playsinline
+    src="https://framerusercontent.com/assets/0WSNWZAbw8pWjNme90TlAPqHTIk.mp4">
+  </video>
+</div>
+
+<!-- TICKER 2 -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item" data-en="Structure first" data-cs="Nejdříve struktura">Structure first <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Clarity over decoration" data-cs="Srozumitelnost nad dekorací">Clarity over decoration <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Design that serves people" data-cs="Design, který slouží lidem">Design that serves people <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Details matter" data-cs="Detaily jsou důležité">Details matter <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Structure first" data-cs="Nejdříve struktura">Structure first <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Clarity over decoration" data-cs="Srozumitelnost nad dekorací">Clarity over decoration <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Design that serves people" data-cs="Design, který slouží lidem">Design that serves people <span class="ticker-dot"></span></span>
+    <span class="ticker-item" data-en="Details matter" data-cs="Detaily jsou důležité">Details matter <span class="ticker-dot"></span></span>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-eyebrow" data-en="frequently asked" data-cs="často kladené otázky">frequently asked</div>
+      <div class="section-title" data-en="FAQ" data-cs="FAQ">FAQ</div>
+    </div>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-num">[01]</span>
+        <span class="faq-text" data-en="What services do you offer?" data-cs="Jaké služby nabízíš?">What services do you offer?</span>
+        <span class="faq-tag" data-en="SERVICES" data-cs="SLUŽBY">SERVICES</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner"><p data-en="UX/UI design and web design — covering the full cycle from user research and wireframes to interactive prototypes and final handoff. I work on both product interfaces and marketing websites." data-cs="UX/UI design a web design — pokrývám celý cyklus od uživatelského výzkumu a wireframů po interaktivní prototypy a finální předání. Pracuji na produktových rozhraních i marketingových webech.">UX/UI design and web design — covering the full cycle from user research and wireframes to interactive prototypes and final handoff. I work on both product interfaces and marketing websites.</p></div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-num">[02]</span>
+        <span class="faq-text" data-en="What tools do you work with?" data-cs="S jakými nástroji pracuješ?">What tools do you work with?</span>
+        <span class="faq-tag" data-en="TOOLS" data-cs="NÁSTROJE">TOOLS</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner"><p data-en="Figma for UX/UI design, wireframing and prototyping. Framer for web design and development. I hand off clean, well-organised files that are easy for developers to work with." data-cs="Figma pro UX/UI design, wireframing a prototypování. Framer pro web design a vývoj. Předávám čisté, dobře organizované soubory, se kterými se vývojářům snadno pracuje.">Figma for UX/UI design, wireframing and prototyping. Framer for web design and development. I hand off clean, well-organised files that are easy for developers to work with.</p></div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-num">[03]</span>
+        <span class="faq-text" data-en="What is your typical timeline?" data-cs="Jaký je obvyklý termín dokončení?">What is your typical timeline?</span>
+        <span class="faq-tag" data-en="TIMELINE" data-cs="TERMÍNY">TIMELINE</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner"><p data-en="A landing page or simple website takes around 2–3 weeks. More complex UX projects range from 4–8 weeks depending on scope and feedback cycles. Timelines are always agreed upfront." data-cs="Landing page nebo jednoduchý web trvá přibližně 2–3 týdny. Složitější UX projekty trvají 4–8 týdnů v závislosti na rozsahu a počtu revizí. Termíny jsou vždy domluveny předem.">A landing page or simple website takes around 2–3 weeks. More complex UX projects range from 4–8 weeks depending on scope and feedback cycles. Timelines are always agreed upfront.</p></div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-num">[04]</span>
+        <span class="faq-text" data-en="Do you work with international clients?" data-cs="Pracuješ s mezinárodními klienty?">Do you work with international clients?</span>
+        <span class="faq-tag" data-en="CLIENTS" data-cs="KLIENTI">CLIENTS</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner"><p data-en="Yes — I'm based in Prague and have worked on projects for clients across the Czech Republic, Slovakia, Russia, and Georgia. I communicate fluently in English, Czech, and Russian." data-cs="Ano — sídlím v Praze a pracoval jsem na projektech pro klienty z České republiky, Slovenska, Ruska a Gruzie. Plynně komunikuji v angličtině, češtině a ruštině.">Yes — I'm based in Prague and have worked on projects for clients across the Czech Republic, Slovakia, Russia, and Georgia. I communicate fluently in English, Czech, and Russian.</p></div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-num">[05]</span>
+        <span class="faq-text" data-en="Are you available for full-time roles?" data-cs="Jsi k dispozici pro full-time pozice?">Are you available for full-time roles?</span>
+        <span class="faq-tag" data-en="AVAILABILITY" data-cs="DOSTUPNOST">AVAILABILITY</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner"><p data-en="Currently exploring both freelance projects and new full-time opportunities. If you have something interesting in mind — let's talk." data-cs="Aktuálně zvažuji jak freelance projekty, tak nové full-time příležitosti. Pokud máš zajímavou nabídku — pojďme si promluvit.">Currently exploring both freelance projects and new full-time opportunities. If you have something interesting in mind — let's talk.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="border-top: 1px solid var(--border);">
+  <div class="contact-inner">
+    <div class="contact-left reveal">
+      <h2 data-en="Let's<br>Talk" data-cs="Pojďme<br>na to">Let's<br>Talk</h2>
+      <p data-en="Have a project in mind, a role to fill, or just want to say hello? Drop me a message and I'll get back to you within a day." data-cs="Máš projekt, pozici nebo chceš jen pozdravit? Napiš mi zprávu a ozvu se do jednoho dne.">
+        Have a project in mind, a role to fill, or just want to say hello? Drop me a message and I'll get back to you within a day.
+      </p>
+      <div class="contact-email">
+        <div class="contact-email-label" data-en="EMAIL" data-cs="EMAIL">EMAIL</div>
+        <a href="mailto:shuster.ux@gmail.com">shuster.ux@gmail.com</a>
+      </div>
+    </div>
+    <div class="contact-form reveal">
+      <input type="text" class="form-field" data-placeholder-en="Name" data-placeholder-cs="Jméno" placeholder="Name">
+      <input type="email" class="form-field" data-placeholder-en="Email" data-placeholder-cs="Email" placeholder="Email">
+      <select class="form-field">
+        <option value="" disabled selected data-en="Topic" data-cs="Téma">Topic</option>
+        <option data-en="UX/UI Design" data-cs="UX/UI Design">UX/UI Design</option>
+        <option data-en="Web Design" data-cs="Web Design">Web Design</option>
+        <option data-en="Full-time opportunity" data-cs="Full-time příležitost">Full-time opportunity</option>
+        <option data-en="Other" data-cs="Jiné">Other</option>
+      </select>
+      <textarea class="form-field" data-placeholder-en="Your message" data-placeholder-cs="Vaše zpráva" placeholder="Your message"></textarea>
+      <button class="form-submit" data-en="[ send message ]" data-cs="[ odeslat ]">[ send message ]</button>
+    </div>
+  </div>
+</section>
+
+<!-- GRID PHOTOS -->
+<div class="grid-photos reveal">
+  <img src="https://framerusercontent.com/images/QeEUs59laLeO1ZE9aHTpsHd0GA.png" alt="">
+  <img src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt="">
+  <img src="https://framerusercontent.com/images/VgmoQJAX56XvHjW14MWU5WR3MU.jpg" alt="">
+  <img src="https://framerusercontent.com/images/MTmdyaiu6k0EW1fPDIwFBtatNoo.png" alt="">
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-name">STEPAN SHUSTER</div>
+  <div class="footer-copy" id="footerCopy">© 2025 · All rights reserved</div>
+  <div class="footer-links">
+    <a href="https://www.behance.net/shusters" target="_blank">Behance</a>
+    <a href="https://www.linkedin.com/in/shusterdesign/" target="_blank">LinkedIn</a>
+    <a href="https://www.instagram.com/stepamonstaxd/" target="_blank">Instagram</a>
+    <a href="mailto:shuster.ux@gmail.com">Email</a>
+  </div>
+</footer>
+
+<script>
+// LOADER
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('done'), 1100);
+});
+
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+(function animCursor() {
+  cursor.style.left = mx+'px'; cursor.style.top = my+'px';
+  rx += (mx-rx)*.12; ry += (my-ry)*.12;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(animCursor);
+})();
+document.querySelectorAll('a,button,.service-header,.faq-q,.work-item').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='54px'; ring.style.height='54px'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='36px'; ring.style.height='36px'; });
+});
+
+// CLOCK (Prague CET/CEST)
+function updateClock() {
+  const now = new Date();
+  const prg = now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Prague', hour12: false });
+  document.getElementById('clock').textContent = prg + ' CET';
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// SCROLL REVEAL
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal,.work-item,.stat-row').forEach(el => obs.observe(el));
+document.querySelectorAll('.work-item').forEach((el,i) => el.style.transitionDelay=(i*.06)+'s');
+document.querySelectorAll('.stat-row').forEach((el,i) => el.style.transitionDelay=(i*.1)+'s');
+
+// SHOWCASE TITLE
+const showObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.3 });
+showObs.observe(document.getElementById('showTitle'));
+
+// COUNTERS
+function animCount(el, target) {
+  const dur=1500, start=performance.now();
+  const suffix = target === 100 ? '%' : '+';
+  (function step(now) {
+    const t = Math.min((now-start)/dur,1);
+    const ease = 1-Math.pow(1-t,3);
+    el.textContent = Math.round(ease*target)+suffix;
+    if(t<1) requestAnimationFrame(step);
+  })(start);
+}
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      const n = e.target.querySelector('[data-count]');
+      if(n && !n.dataset.done) { n.dataset.done=1; animCount(n, +n.dataset.count); }
+    }
+  });
+}, { threshold:0.5 });
+document.querySelectorAll('.stat-row').forEach(el => cObs.observe(el));
+
+// SERVICE ACCORDION
+function toggleService(header) {
+  const item = header.closest('.service-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.service-item').forEach(i => i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+}
+
+// FAQ ACCORDION
+function toggleFaq(header) {
+  header.closest('.faq-item').classList.toggle('open');
+}
+
+// TESTIMONIAL SLIDER (placeholder, only 1 card shown)
+let ti=0;
+function slideTesti(d) {
+  const cards = document.querySelectorAll('.testi-card');
+  ti = (ti+d+cards.length)%cards.length;
+  document.getElementById('testiTrack').style.transform = `translateX(calc(-${ti*100}% - ${ti*2}px))`;
+}
+
+// PARALLAX
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const mw = document.querySelector('.hero-marquee-wrap');
+  if(mw) mw.style.transform = `translateY(${y*.28}px)`;
+});
+
+// ─── HAMBURGER MENU ──────────────────────────────────────────────────
+function toggleMenu() {
+  const menu = document.getElementById('mobileMenu');
+  const burger = document.getElementById('hamburger');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  burger.classList.toggle('open', !isOpen);
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+function closeMenu() {
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── LANGUAGE SWITCHER ───────────────────────────────────────────────
+function setLang(lang) {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.getElementById('btnEN').classList.toggle('active', lang==='en');
+  document.getElementById('btnCS').classList.toggle('active', lang==='cs');
+
+  // Translate all elements with data-en / data-cs
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const txt = el.getAttribute('data-'+lang);
+    if(txt) el.innerHTML = txt;
+  });
+
+  // Translate placeholders
+  document.querySelectorAll('[data-placeholder-en]').forEach(el => {
+    el.placeholder = el.getAttribute('data-placeholder-'+lang) || el.placeholder;
+  });
+
+  // Footer copy
+  document.getElementById('footerCopy').textContent =
+    lang === 'cs' ? '© 2025 · Všechna práva vyhrazena' : '© 2025 · All rights reserved';
+}
+</script>
+</body>
+</html>
