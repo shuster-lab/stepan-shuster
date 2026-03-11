@@ -664,26 +664,77 @@
     position: relative;
     border-top: 1px solid var(--border);
     overflow: hidden;
-    background: var(--bg);
     cursor: grab;
+    min-height: 20vh;
+    background-color: #000000;
+  }
+  /* Grid lives on ::after so we can mask it independently */
+  .gravity-section::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(240,237,232,1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240,237,232,1) 1px, transparent 1px);
+    background-size: 48px 48px;
+    /*
+      mask-image controls per-pixel opacity of the grid lines.
+      Bright band (alpha 1) = lines fully visible.
+      Dark zones (alpha .06) = lines nearly invisible.
+      Animating mask-position slides the band across — lines themselves shimmer.
+    */
+    -webkit-mask-image: linear-gradient(
+      115deg,
+      rgba(0,0,0,.005) 0%,
+      rgba(0,0,0,.005) 20%,
+      rgba(0,0,0,.045) 38%,
+      rgba(0,0,0,.08)  50%,
+      rgba(0,0,0,.045) 62%,
+      rgba(0,0,0,.005) 80%,
+      rgba(0,0,0,.005) 100%
+    );
+    mask-image: linear-gradient(
+      115deg,
+      rgba(0,0,0,.005) 0%,
+      rgba(0,0,0,.005) 20%,
+      rgba(0,0,0,.045) 38%,
+      rgba(0,0,0,.08)  50%,
+      rgba(0,0,0,.045) 62%,
+      rgba(0,0,0,.005) 80%,
+      rgba(0,0,0,.005) 100%
+    );
+    -webkit-mask-size: 300% 300%;
+    mask-size: 300% 300%;
+    animation: gridLineSweep 6s linear infinite;
+  }
+  @keyframes gridLineSweep {
+    0%   { -webkit-mask-position: 160% 160%; mask-position: 160% 160%; }
+    100% { -webkit-mask-position: -60% -60%; mask-position: -60% -60%; }
   }
   .gravity-section:active { cursor: grabbing; }
   .gravity-header {
     position: absolute;
-    top: 40px; left: 40px;
-    z-index: 2;
+    top: 28px; left: 40px;
+    z-index: 3;
     pointer-events: none;
   }
   #gravityCanvas {
     display: block;
-    width: 100%;
-    touch-action: none; /* needed for touch drag on mobile */
+    max-width: 100%;
+    touch-action: none;
+    position: relative;
+    z-index: 2;
+    background: transparent;
   }
 
   @media (max-width: 768px) {
+    .gravity-section::after { background-size: 32px 32px; }
     .gravity-header { top: 20px; left: 20px; }
   }
   @media (max-width: 480px) {
+    .gravity-section::after { background-size: 24px 24px; }
     .gravity-header { top: 16px; left: 16px; }
   }
 
@@ -1578,227 +1629,280 @@ function closeMenu() {
   document.body.style.overflow = '';
 }
 
-// ─── GRAVITY — Matter.js realistic physics + gyroscope ───────────────
-(function initGravity() {
-  const section = document.getElementById('gravitySection');
-  const canvas  = document.getElementById('gravityCanvas');
-  if (!section || !canvas) return;
+// ─── GRAVITY — pure JS physics, no dependencies ─────────────────────
+window.addEventListener('load', function() {
+  var section = document.getElementById('gravitySection');
+  var canvas  = document.getElementById('gravityCanvas');
+  if (!section || !canvas) { console.error('gravity: elements not found'); return; }
 
-  const script  = document.createElement('script');
-  script.src    = 'https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js';
-  script.onload = setup;
-  script.onerror = () => console.warn('Matter.js failed to load');
-  document.head.appendChild(script);
+  var ctx = canvas.getContext('2d');
+  var W, H;
 
-  function setup() {
-    const { Engine, Render, Runner, Bodies, Body, World,
-            Events, Mouse, MouseConstraint } = Matter;
+  function isMobile() { return window.innerWidth <= 768; }
 
-    const isMobile = () => window.innerWidth <= 768;
-
-    // ── Sizing ──────────────────────────────────────────────────────
-    function calcSize() {
-      const w = section.offsetWidth;
-      const h = isMobile() ? Math.max(380, w * 1.0)
-                           : Math.max(480, w * 0.54);
-      return { w, h };
-    }
-
-    let { w: W, h: H } = calcSize();
-
-    // Set canvas to exact CSS pixels — no manual dpr, let Matter handle it
-    canvas.style.width  = '100%';
-    canvas.style.height = H + 'px';
+  function setSize() {
+    W = section.offsetWidth || document.documentElement.clientWidth || 800;
+    // exactly 20vh, with a sensible minimum so letters are legible
+    var vh20 = Math.round(window.innerHeight * 0.20);
+    H = Math.max(140, vh20);
     canvas.width        = W;
     canvas.height       = H;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+  }
+  setSize();
 
-    // ── Engine ───────────────────────────────────────────────────────
-    const engine = Engine.create({ gravity: { x: 0, y: 1.8 } });
-    const world  = engine.world;
+  // ── font & letter config ───────────────────────────────────────────
+  var WORD  = 'SHUSTER';
+  var RATIO = { S:.57, H:.69, U:.66, T:.54, E:.59, R:.62 };
+  var FILLS = ['#f0ede8','rgba(240,237,232,.83)','rgba(240,237,232,.68)',
+               '#f0ede8','rgba(240,237,232,.77)','rgba(240,237,232,.71)','#f0ede8'];
 
-    // ── Renderer — background transparent, wireframes off ────────────
-    const render = Render.create({
-      canvas, engine,
-      options: {
-        width: W, height: H,
-        background: 'transparent',
-        wireframes: false
-      }
-    });
+  function getFS() {
+    // letters fill ~72% of canvas height, but never wider than their slot
+    var fromH  = Math.round(H * 0.72);
+    var slot   = W / WORD.length;
+    var fromW  = Math.round(slot / 0.69); // widest letter (H) ratio
+    return Math.min(fromH, fromW);
+  }
 
-    // ── Walls ────────────────────────────────────────────────────────
-    const WO = { isStatic: true, friction: 0.4, restitution: 0.25,
-                 render: { visible: false } };
-    let walls = [];
+  // ── physics state ─────────────────────────────────────────────────
+  var letters  = [];
+  var GX       = 0;
+  var GY       = 0;       // starts frozen — released on scroll into view
+  var launched = false;
 
-    function makeWalls(w, h) {
-      walls.forEach(b => World.remove(world, b));
-      walls = [
-        Bodies.rectangle(w / 2,  h + 30, w * 4, 60,    WO), // floor
-        Bodies.rectangle(w / 2, -30,     w * 4, 60,    WO), // ceiling
-        Bodies.rectangle(-30,   h / 2,   60,    h * 3, WO), // left
-        Bodies.rectangle(w + 30, h / 2,  60,    h * 3, WO), // right
-      ];
-      World.add(world, walls);
-    }
-    makeWalls(W, H);
+  function spawn() {
+    letters = [];
+    var fs   = getFS();
+    var lh   = fs * 0.86;
+    var slot = W / WORD.length;
 
-    // ── Letters ──────────────────────────────────────────────────────
-    // Bebas Neue approximate width ratio per char
-    const RATIO = { S:.58, H:.70, U:.68, T:.56, E:.60, R:.63 };
-    const WORD  = 'SHUSTER';
-
-    function calcFont(w) {
-      if (w <= 480) return Math.max(48, w / 7);
-      if (w <= 768) return Math.max(64, w / 6.5);
-      return Math.max(90, Math.min(190, w / 5));
-    }
-
-    const FILLS = [
-      '#f0ede8', 'rgba(240,237,232,.8)', 'rgba(240,237,232,.65)',
-      '#f0ede8', 'rgba(240,237,232,.75)', 'rgba(240,237,232,.7)', '#f0ede8'
-    ];
-
-    let bodies = [];
-
-    function spawnLetters(w, h) {
-      bodies.forEach(b => World.remove(world, b));
-      bodies = [];
-      const fs = calcFont(w);
-      const lh = fs * 0.9;
-
-      WORD.split('').forEach((ch, i) => {
-        const lw  = fs * (RATIO[ch] || 0.62);
-        const col = w / WORD.length;
-        const x   = col * i + col / 2 + (Math.random() - .5) * col * .25;
-        const y   = -lh * (1.2 + i * 0.5); // staggered fall
-
-        const b = Bodies.rectangle(x, y, lw * 0.82, lh * 0.78, {
-          restitution:   0.3,
-          friction:      0.5,
-          frictionAir:   0.015,
-          frictionStatic: 0.3,
-          density:       0.003,
-          angle:         (Math.random() - .5) * 0.45,
-          render:        { fillStyle: 'transparent', strokeStyle: 'transparent', lineWidth: 0 },
-          label:         ch
-        });
-        Body.setVelocity(b, { x: (Math.random() - .5) * 5, y: Math.random() * 1.5 });
-        bodies.push(b);
+    WORD.split('').forEach(function(ch, i) {
+      var lw = fs * (RATIO[ch] || 0.62);
+      // start just above top, stagger is tight (0.15 * lh apart)
+      var startY = -(lh * 0.5 + i * lh * 0.15);
+      letters.push({
+        ch:     ch,
+        idx:    i,
+        x:      slot * i + slot / 2 + (Math.random() - .5) * slot * .12,
+        y:      startY,
+        vx:     0,
+        vy:     0,
+        w:      lw,
+        h:      lh,
+        angle:  (Math.random() - .5) * 0.25,
+        va:     0,
+        fs:     fs,
+        active: false
       });
-      World.add(world, bodies);
-    }
-    spawnLetters(W, H);
-
-    // ── Mouse drag ───────────────────────────────────────────────────
-    const mouse = Mouse.create(canvas);
-    const mc    = MouseConstraint.create(engine, {
-      mouse,
-      constraint: { stiffness: 0.18, damping: 0.12, render: { visible: false } }
-    });
-    World.add(world, mc);
-    render.mouse = mouse;
-
-    // ── Custom letter rendering ───────────────────────────────────────
-    const ctx = canvas.getContext('2d');
-
-    Events.on(render, 'afterRender', () => {
-      const fs = calcFont(W);
-      ctx.save();
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font         = `900 ${fs}px 'Bebas Neue', sans-serif`;
-
-      bodies.forEach((b, i) => {
-        ctx.save();
-        ctx.translate(b.position.x, b.position.y);
-        ctx.rotate(b.angle);
-
-        // drop shadow for depth
-        ctx.shadowColor   = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur    = 24;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 8;
-
-        ctx.fillStyle = FILLS[i] || '#f0ede8';
-        ctx.fillText(b.label, 0, 0);
-
-        // reset shadow, draw thin stroke on top
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur  = 0;
-        ctx.strokeStyle = 'rgba(240,237,232,.07)';
-        ctx.lineWidth   = 1;
-        ctx.strokeText(b.label, 0, 0);
-
-        ctx.restore();
-      });
-      ctx.restore();
-    });
-
-    // ── Run ──────────────────────────────────────────────────────────
-    Render.run(render);
-    const runner = Runner.create();
-    Runner.run(runner, engine);
-
-    // ── Gyroscope (mobile) ───────────────────────────────────────────
-    let gyroActive = false;
-
-    function handleOrientation(e) {
-      if (!isMobile()) return;
-      const gx = Math.max(-35, Math.min(35, e.gamma || 0)) / 35;
-      const gy = Math.max(-35, Math.min(35, e.beta  || 0)) / 35;
-      engine.gravity.x =  gx * 2.2;
-      engine.gravity.y =  Math.max(0.2, gy * 2.2);
-    }
-
-    function startGyro() {
-      if (gyroActive) return;
-      gyroActive = true;
-      window.addEventListener('deviceorientation', handleOrientation);
-    }
-
-    if (isMobile()) {
-      if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-        // iOS 13+ — needs user gesture
-        const hint = document.createElement('div');
-        hint.textContent = 'TAP TO ENABLE TILT';
-        hint.style.cssText = `position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-          font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;
-          color:rgba(240,237,232,.3);pointer-events:none;z-index:3;`;
-        section.appendChild(hint);
-        canvas.addEventListener('click', () => {
-          DeviceOrientationEvent.requestPermission()
-            .then(s => { if (s === 'granted') { startGyro(); hint.remove(); } })
-            .catch(() => {});
-        }, { once: true });
-      } else {
-        startGyro(); // Android / older iOS
-      }
-    }
-
-    // ── Resize ───────────────────────────────────────────────────────
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        const { w, h } = calcSize();
-        W = w; H = h;
-        canvas.width  = W;
-        canvas.height = H;
-        canvas.style.height = H + 'px';
-        render.canvas.width  = W;
-        render.canvas.height = H;
-        render.options.width  = W;
-        render.options.height = H;
-        makeWalls(W, H);
-        spawnLetters(W, H);
-        if (!isMobile()) { engine.gravity.x = 0; engine.gravity.y = 1.8; }
-      }, 180);
     });
   }
-})();
+  spawn();
 
+  // Release letters one by one with stagger when section enters view
+  function launch() {
+    if (launched) return;
+    launched = true;
+    GY = 0.55;  // global gravity on
 
+    letters.forEach(function(l, i) {
+      setTimeout(function() {
+        l.active = true;
+        l.vx = (Math.random() - .5) * 4;
+        l.vy = Math.random() * 1.5;
+        l.va = (Math.random() - .5) * 0.06;
+      }, i * 80);  // 80ms between each letter = nice cascade
+    });
+  }
+
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      launch();
+      observer.disconnect();
+    }
+  }, { threshold: 0.25 });
+  observer.observe(section);
+
+  // ── physics update ────────────────────────────────────────────────
+  var BOUNCE   = 0.32;
+  var FRICTION = 0.88;
+  var AIR_DRAG = 0.992;
+
+  function update() {
+    var fs = getFS();
+    letters.forEach(function(l) {
+      l.fs = fs;
+      if (!l.active) return;  // frozen until launched
+
+      // gravity
+      l.vx += GX;
+      l.vy += GY;
+      // air drag
+      l.vx *= AIR_DRAG;
+      l.vy *= AIR_DRAG;
+      // angular drag
+      l.va *= 0.985;
+      // move
+      l.x += l.vx;
+      l.y += l.vy;
+      l.angle += l.va;
+
+      var hw = l.w * 0.5, hh = l.h * 0.5;
+
+      // floor
+      if (l.y + hh > H) {
+        l.y  = H - hh;
+        l.vy = -Math.abs(l.vy) * BOUNCE;
+        l.vx *= FRICTION;
+        l.va *= FRICTION;
+        if (Math.abs(l.vy) < 0.8) l.vy = 0;
+      }
+      // ceiling
+      if (l.y - hh < 0) {
+        l.y  = hh;
+        l.vy = Math.abs(l.vy) * BOUNCE;
+      }
+      // left wall
+      if (l.x - hw < 0) {
+        l.x  = hw;
+        l.vx = Math.abs(l.vx) * BOUNCE;
+        l.va *= -0.5;
+      }
+      // right wall
+      if (l.x + hw > W) {
+        l.x  = W - hw;
+        l.vx = -Math.abs(l.vx) * BOUNCE;
+        l.va *= -0.5;
+      }
+    });
+  }
+
+  // ── draw ─────────────────────────────────────────────────────────
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    letters.forEach(function(l) {
+      // skip letters still above canvas (y negative means off-screen)
+      if (!l.active && l.y + l.h * 0.5 < 0) return;
+
+      ctx.save();
+      ctx.translate(l.x, l.y);
+      ctx.rotate(l.angle);
+
+      ctx.font         = '900 ' + l.fs + "px 'Bebas Neue', 'Arial Black', sans-serif";
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+
+      ctx.shadowColor   = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur    = 18;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 7;
+      ctx.fillStyle = FILLS[l.idx] || '#f0ede8';
+      ctx.fillText(l.ch, 0, 0);
+
+      ctx.restore();
+    });
+  }
+
+  function tick() {
+    update();
+    draw();
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // ── mouse drag ────────────────────────────────────────────────────
+  var dragging = null, dragOX = 0, dragOY = 0;
+
+  function getPos(e) {
+    var r  = canvas.getBoundingClientRect();
+    var sx = canvas.width  / r.width;
+    var sy = canvas.height / r.height;
+    var cx = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) * sx;
+    var cy = ((e.touches ? e.touches[0].clientY : e.clientY) - r.top)  * sy;
+    return { x: cx, y: cy };
+  }
+
+  function findLetter(mx, my) {
+    for (var i = letters.length - 1; i >= 0; i--) {
+      var l = letters[i];
+      if (Math.abs(mx - l.x) < l.w * .6 && Math.abs(my - l.y) < l.h * .6) return l;
+    }
+    return null;
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    var p = getPos(e);
+    dragging = findLetter(p.x, p.y);
+    if (dragging) { dragOX = p.x - dragging.x; dragOY = p.y - dragging.y; dragging.vx = dragging.vy = 0; }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var p = getPos(e);
+    dragging.vx = (p.x - dragOX - dragging.x) * 0.35;
+    dragging.vy = (p.y - dragOY - dragging.y) * 0.35;
+    dragging.x  = p.x - dragOX;
+    dragging.y  = p.y - dragOY;
+  });
+  window.addEventListener('mouseup', function() { dragging = null; });
+
+  canvas.addEventListener('touchstart', function(e) {
+    var p = getPos(e);
+    dragging = findLetter(p.x, p.y);
+    if (dragging) { dragOX = p.x - dragging.x; dragOY = p.y - dragging.y; dragging.vx = dragging.vy = 0; }
+  }, { passive: true });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!dragging) return;
+    var p = getPos(e);
+    dragging.vx = (p.x - dragOX - dragging.x) * 0.35;
+    dragging.vy = (p.y - dragOY - dragging.y) * 0.35;
+    dragging.x  = p.x - dragOX;
+    dragging.y  = p.y - dragOY;
+  }, { passive: true });
+  window.addEventListener('touchend', function() { dragging = null; });
+
+  // ── gyroscope ────────────────────────────────────────────────────
+  var gyroOn = false;
+  function onOrientation(e) {
+    if (!isMobile() || !launched) return;
+    GX = Math.max(-35, Math.min(35, e.gamma || 0)) / 35 * 0.6;
+    GY = Math.max(0.08, Math.max(-20, Math.min(50, e.beta || 0)) / 35 * 0.7);
+  }
+  function startGyro() {
+    if (gyroOn) return; gyroOn = true;
+    window.addEventListener('deviceorientation', onOrientation);
+  }
+  if (isMobile()) {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      var hint = document.createElement('div');
+      hint.textContent = '[ TAP TO ENABLE TILT ]';
+      hint.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);' +
+        "font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.18em;" +
+        'color:rgba(240,237,232,.28);pointer-events:none;z-index:3;white-space:nowrap;';
+      section.appendChild(hint);
+      canvas.addEventListener('click', function() {
+        DeviceOrientationEvent.requestPermission()
+          .then(function(s) { if (s === 'granted') { startGyro(); hint.remove(); } });
+      }, { once: true });
+    } else { startGyro(); }
+  }
+
+  // ── resize ────────────────────────────────────────────────────────
+  var resizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      setSize();
+      launched = false;
+      spawn();
+      if (!isMobile()) { GX = 0; GY = 0; }
+      // re-observe so it triggers again after resize
+      observer.observe(section);
+    }, 150);
+  });
+});
 
 // ─── LANGUAGE SWITCHER ───────────────────────────────────────────────
 function setLang(lang) {
