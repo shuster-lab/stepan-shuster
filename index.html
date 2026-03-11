@@ -1845,10 +1845,6 @@ window.addEventListener('load', function() {
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'middle';
 
-      ctx.shadowColor   = 'rgba(0,0,0,0.55)';
-      ctx.shadowBlur    = 18;
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 7;
       ctx.fillStyle = FILLS[l.idx] || '#f0ede8';
       ctx.fillText(l.ch, 0, 0);
 
@@ -1917,10 +1913,13 @@ window.addEventListener('load', function() {
 
   function onOrientation(e) {
     if (!isMobile() || !launched) return;
-    // gamma = left/right tilt, beta = forward/back tilt
-    // tight clamp + weak multiplier so letters never get crushed
-    targetGX = Math.max(-25, Math.min(25, e.gamma || 0)) / 25 * 0.30;
-    targetGY = Math.max(10,  Math.min(65, e.beta  || 45)) / 45 * 0.42;
+    // gamma: left/right tilt -90..90 → horizontal gravity
+    // beta:  forward/back tilt 0..90 (held upright) → vertical gravity
+    //        negative beta = tilted back = letters fly up
+    var gx = Math.max(-45, Math.min(45, e.gamma || 0)) / 45;
+    var gy = Math.max(-45, Math.min(45, (e.beta || 45) - 45)) / 45;
+    targetGX = gx * 0.45;
+    targetGY = gy * 0.45;  // can be negative → upward force
   }
   function startGyro() {
     if (gyroOn) return; gyroOn = true;
