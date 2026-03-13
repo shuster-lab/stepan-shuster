@@ -76,7 +76,44 @@
   @keyframes mLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @keyframes mRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
   .marquee-img{width:200px;height:260px;object-fit:cover;border-radius:2px;flex-shrink:0;filter:grayscale(25%)}
-  .hero-content{position:relative;z-index:2;padding:0 40px}
+  .hero-content{position:relative;z-index:2;padding:0 40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:40px}
+  .hero-text{flex:1;min-width:300px}
+
+  /* Photo frame — rapid cycling */
+  .hero-frame{
+    width:clamp(160px,14vw,220px);
+    aspect-ratio:3/4;
+    border:1px solid var(--border);
+    position:relative;overflow:hidden;
+    flex-shrink:0;
+    opacity:0;transform:translateY(12px);
+  }
+  .hero-frame.show{animation:fadeUp .6s .3s forwards}
+  .hero-frame img{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    opacity:0;
+    transition:none;
+  }
+  .hero-frame img.active{opacity:1}
+  /* Glitch flash on switch */
+  .hero-frame::after{
+    content:'';position:absolute;inset:0;
+    background:#fff;opacity:0;
+    pointer-events:none;
+    mix-blend-mode:overlay;
+  }
+  .hero-frame.flash::after{animation:frameFlash .12s}
+  @keyframes frameFlash{0%{opacity:.35}100%{opacity:0}}
+
+  /* Project hover cursor — ring enlarges with padding feel */
+  .cursor-ring.pj-active{
+    width:80px!important;height:80px!important;
+    border-color:rgba(240,237,232,0.6);
+    background:rgba(240,237,232,0.04);
+    mix-blend-mode:difference;
+  }
   .hero-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--fg-dim);margin-bottom:16px;opacity:0;transform:translateY(12px)}
   .hero-label.show{animation:fadeUp .6s forwards}
   .hero-title{font-family:var(--font-display);font-size:clamp(60px,10vw,148px);line-height:.92;letter-spacing:-.01em;text-transform:uppercase;overflow:visible}
@@ -142,7 +179,7 @@
 
   /* Image container */
   .pj-img{
-    position:relative;overflow:hidden;cursor:pointer;
+    position:relative;overflow:hidden;cursor:none;
     aspect-ratio:16/10;
     border-radius:3px;
   }
@@ -318,7 +355,7 @@
   .mobile-menu-footer a{font-family:var(--font-mono);font-size:11px!important;letter-spacing:.1em!important;opacity:.5!important}
 
   @media(max-width:1024px){nav{padding:18px 28px}section{padding:90px 28px}.showcase{padding:0 28px 90px}.hero-content{padding:0 28px}.about-grid{grid-template-columns:1fr;gap:56px}.about-text p{max-width:100%}.contact-inner{grid-template-columns:1fr;gap:48px}.service-inner{grid-template-columns:1fr}footer{grid-template-columns:1fr 1fr;gap:20px}.footer-copy{grid-column:1/-1;order:3;text-align:left}}
-  @media(max-width:768px){body{cursor:auto}.cursor,.cursor-ring{display:none}nav{padding:16px 20px}.nav-links{display:none}.nav-right{display:none}.nav-hamburger{display:flex}.mobile-menu{display:flex}section{padding:72px 20px}.showcase{padding:0 20px 72px}.hero-content{padding:0 20px}.hero-label{font-size:10px}.hero-bottom{flex-direction:column;align-items:flex-start;gap:20px}.hero-tagline{max-width:100%}.marquee-img{width:130px;height:170px}.section-header{flex-wrap:wrap;gap:16px}.about-grid{grid-template-columns:1fr;gap:40px}.about-meta{grid-template-columns:1fr 1fr}.stat-num{min-width:100px}.showcase-title{font-size:clamp(56px,16vw,100px)}.showcase-video{aspect-ratio:4/3}.faq-tag{display:none}.faq-answer-inner p{padding-left:36px}.contact-inner{grid-template-columns:1fr;gap:40px}.contact-left h2{font-size:clamp(44px,12vw,72px)}.form-submit{width:100%;text-align:center;padding:18px}footer{grid-template-columns:1fr;gap:20px;padding:32px 20px}.footer-copy{text-align:left}.footer-links{flex-wrap:wrap;gap:16px}.lang-switcher{margin-left:auto}}
+  @media(max-width:768px){body{cursor:auto}.cursor,.cursor-ring{display:none}nav{padding:16px 20px}.nav-links{display:none}.nav-right{display:none}.nav-hamburger{display:flex}.mobile-menu{display:flex}section{padding:72px 20px}.showcase{padding:0 20px 72px}.hero-content{padding:0 20px}.hero-frame{width:120px;position:absolute;right:20px;bottom:0}.hero-label{font-size:10px}.hero-bottom{flex-direction:column;align-items:flex-start;gap:20px}.hero-tagline{max-width:100%}.marquee-img{width:130px;height:170px}.section-header{flex-wrap:wrap;gap:16px}.about-grid{grid-template-columns:1fr;gap:40px}.about-meta{grid-template-columns:1fr 1fr}.stat-num{min-width:100px}.showcase-title{font-size:clamp(56px,16vw,100px)}.showcase-video{aspect-ratio:4/3}.faq-tag{display:none}.faq-answer-inner p{padding-left:36px}.contact-inner{grid-template-columns:1fr;gap:40px}.contact-left h2{font-size:clamp(44px,12vw,72px)}.form-submit{width:100%;text-align:center;padding:18px}footer{grid-template-columns:1fr;gap:20px;padding:32px 20px}.footer-copy{text-align:left}.footer-links{flex-wrap:wrap;gap:16px}.lang-switcher{margin-left:auto}}
   @media(max-width:480px){nav{padding:14px 16px}section{padding:56px 16px}.showcase{padding:0 16px 56px}.hero-content{padding:0 16px}.about-meta{grid-template-columns:1fr}.stat-num{font-size:52px;min-width:90px}.mobile-menu{padding:24px 16px}footer{padding:28px 16px}.footer-links{gap:12px}}
 </style>
 </head>
@@ -352,14 +389,26 @@
     <div class="marquee-track" id="heroTrack2"><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/QOxyyX0DyXpOkZkSzTvf9Ilk78.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/DsoVluvQFeLtKZ524PpREoIkG8.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/xXYbdDqkxA2c1arUA827SoS3lIM.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/6IVtexOH0lkFGu1YBRK5lSv2fE.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/8k3DS7hIbXaqfJhS6W8z2Hg4I.png" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/eIYpwzIIKlLenHbGloUIRouSd20.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/5NEEjSQ0PuvND1uGYPf8ebBLVg.jpg" alt=""><img class="marquee-img" src="https://framerusercontent.com/images/2tgHwDdn6t6c7TVeW0Z6dnmmY.jpg" alt=""></div>
   </div>
   <div class="hero-content">
-    <div class="hero-label" id="heroLabel" data-en="UX/UI &amp; Web Designer — Prague, CZ" data-cs="UX/UI &amp; Web Designer — Praha, CZ">UX/UI &amp; Web Designer — Prague, CZ</div>
-    <div class="hero-title" id="heroTitle">
-      <span class="title-line">STEPAN</span>
-      <span class="title-line">SHUSTER</span>
+    <div class="hero-text">
+      <div class="hero-label" id="heroLabel" data-en="UX/UI &amp; Web Designer — Prague, CZ" data-cs="UX/UI &amp; Web Designer — Praha, CZ">UX/UI &amp; Web Designer — Prague, CZ</div>
+      <div class="hero-title" id="heroTitle">
+        <span class="title-line">STEPAN</span>
+        <span class="title-line">SHUSTER</span>
+      </div>
+      <div class="hero-bottom" id="heroBottom">
+        <div class="hero-tagline" data-en="Designing digital experiences that feel inevitable — where structure meets intuition." data-cs="Navrhuji digitální zážitky, které působí přirozeně — kde struktura potkává intuici.">Designing digital experiences that feel inevitable — where structure meets intuition.</div>
+        <a href="#works" class="scroll-cta" data-en="[ scroll down ]" data-cs="[ rolovat dolů ]">[ scroll down ]</a>
+      </div>
     </div>
-    <div class="hero-bottom" id="heroBottom">
-      <div class="hero-tagline" data-en="Designing digital experiences that feel inevitable — where structure meets intuition." data-cs="Navrhuji digitální zážitky, které působí přirozeně — kde struktura potkává intuici.">Designing digital experiences that feel inevitable — where structure meets intuition.</div>
-      <a href="#works" class="scroll-cta" data-en="[ scroll down ]" data-cs="[ rolovat dolů ]">[ scroll down ]</a>
+    <div class="hero-frame" id="heroFrame">
+      <img src="photos/IMG_7731.jpeg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_2.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_3.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_4.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_5.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_6.jpg" alt="">
+      <img src="photos/PHOTO-2025-07-15-17-25-30_7.jpg" alt="">
     </div>
   </div>
 </section>
@@ -559,11 +608,12 @@
 
     // Drop marquee back into hero (position:absolute, normal z-index)
     mqWrap.classList.remove('loader-phase');
-    // Keep settling class for smooth opacity transition, it's already at 0.2
 
     document.getElementById('heroLabel').classList.add('show');
     setTimeout(function() {
       document.getElementById('heroBottom').classList.add('show');
+      var hf = document.getElementById('heroFrame');
+      if (hf) hf.classList.add('show');
     }, 300);
 
     setTimeout(function() {
@@ -574,6 +624,31 @@
   }
 })();
 
+// ═══ HERO PHOTO FRAME — rapid cycling with glitch flash ═══
+(function(){
+  var frame = document.getElementById('heroFrame');
+  if (!frame) return;
+  var imgs = frame.querySelectorAll('img');
+  if (!imgs.length) return;
+  var current = 0;
+  var interval = 280; // ms between switches
+
+  // Start first image
+  imgs[0].classList.add('active');
+
+  function cycle() {
+    imgs[current].classList.remove('active');
+    current = (current + 1) % imgs.length;
+    imgs[current].classList.add('active');
+    // Flash effect
+    frame.classList.remove('flash');
+    void frame.offsetHeight;
+    frame.classList.add('flash');
+  }
+
+  setInterval(cycle, interval);
+})();
+
 // ═══ CURSOR ═══
 var cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing'),arrowC=document.getElementById('cursorArrow');
 var mx=0,my=0,rx=0,ry=0;
@@ -582,11 +657,16 @@ document.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});
 document.querySelectorAll('a,button,.service-header,.faq-q').forEach(function(el){el.addEventListener('mouseenter',function(){ring.style.width='54px';ring.style.height='54px';});el.addEventListener('mouseleave',function(){ring.style.width='36px';ring.style.height='36px';});});
 
 // PIXEL ARROW
-(function(){if(!arrowC)return;arrowC.style.left='-200px';arrowC.style.top='-200px';var PS=3,GRID=8,PAD=6,SQ=GRID*PS+PAD*2;arrowC.width=SQ;arrowC.height=SQ;var actx=arrowC.getContext('2d');var HEAD=[[0,7],[0,6],[0,5],[0,4],[1,7],[2,7],[1,6],[2,5]];var SHAFT=[[3,4],[4,3],[5,2],[6,1],[7,0]];var FRAMES=[[1,1,1,1,1],[1,1,1,.45,.12],[1,1,.45,.12,0],[1,.45,.12,0,0]];var FMS=120,isO=false;var TX=PAD+7*PS+PS/2,TY=PAD+PS/2;function df(ts){actx.clearRect(0,0,SQ,SQ);actx.strokeStyle='rgba(240,237,232,0.16)';actx.lineWidth=1;actx.strokeRect(.5,.5,SQ-1,SQ-1);var f=Math.floor((ts||0)/FMS)%FRAMES.length;var a=FRAMES[f];actx.fillStyle='#f0ede8';HEAD.forEach(function(p){actx.fillRect(PAD+p[1]*PS,PAD+p[0]*PS,PS,PS);});SHAFT.forEach(function(p,i){if(a[i]<=0)return;actx.fillStyle='rgba(240,237,232,'+a[i]+')';actx.fillRect(PAD+p[1]*PS,PAD+p[0]*PS,PS,PS);});}document.addEventListener('mousemove',function(e){if(!isO)return;arrowC.style.left=(e.clientX-TX)+'px';arrowC.style.top=(e.clientY-TY)+'px';});// pj-img uses CSS cursor:pointer, no custom cursor
-// Hide dot+ring on project hovers
+(function(){if(!arrowC)return;arrowC.style.left='-200px';arrowC.style.top='-200px';var PS=3,GRID=8,PAD=6,SQ=GRID*PS+PAD*2;arrowC.width=SQ;arrowC.height=SQ;var actx=arrowC.getContext('2d');var HEAD=[[0,7],[0,6],[0,5],[0,4],[1,7],[2,7],[1,6],[2,5]];var SHAFT=[[3,4],[4,3],[5,2],[6,1],[7,0]];var FRAMES=[[1,1,1,1,1],[1,1,1,.45,.12],[1,1,.45,.12,0],[1,.45,.12,0,0]];var FMS=120,isO=false;var TX=PAD+7*PS+PS/2,TY=PAD+PS/2;function df(ts){actx.clearRect(0,0,SQ,SQ);actx.strokeStyle='rgba(240,237,232,0.16)';actx.lineWidth=1;actx.strokeRect(.5,.5,SQ-1,SQ-1);var f=Math.floor((ts||0)/FMS)%FRAMES.length;var a=FRAMES[f];actx.fillStyle='#f0ede8';HEAD.forEach(function(p){actx.fillRect(PAD+p[1]*PS,PAD+p[0]*PS,PS,PS);});SHAFT.forEach(function(p,i){if(a[i]<=0)return;actx.fillStyle='rgba(240,237,232,'+a[i]+')';actx.fillRect(PAD+p[1]*PS,PAD+p[0]*PS,PS,PS);});}document.addEventListener('mousemove',function(e){if(!isO)return;arrowC.style.left=(e.clientX-TX)+'px';arrowC.style.top=(e.clientY-TY)+'px';});// pj-img hover — enlarge cursor ring with padding feel
 document.querySelectorAll('.pj-img').forEach(function(el){
-  el.addEventListener('mouseenter',function(){cursor.style.opacity='0';ring.style.opacity='0';});
-  el.addEventListener('mouseleave',function(){cursor.style.opacity='1';ring.style.opacity='1';});
+  el.addEventListener('mouseenter',function(){
+    cursor.style.opacity='0';
+    ring.classList.add('pj-active');
+  });
+  el.addEventListener('mouseleave',function(){
+    cursor.style.opacity='1';
+    ring.classList.remove('pj-active');
+  });
 });(function lp(ts){if(isO)df(ts);requestAnimationFrame(lp);})(0);})();
 
 // CLOCK
